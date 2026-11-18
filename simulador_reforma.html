@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador Reforma Tributária | Máxima</title>
+<style>
+  :root{
+    --vermelho:#C0202E; --verde:#1D9E75; --azul:#2D7FF9; --amarelo:#E8A100;
+    --fundo:#f2f3f5; --card:#fff; --texto:#1c1c1e; --cinza:#8a8a8e; --borda:#e5e5ea;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  body{background:var(--fundo);color:var(--texto);line-height:1.5}
+  header{background:#fff;border-bottom:1px solid var(--borda);padding:14px 22px;display:flex;align-items:center;gap:12px}
+  .losango{width:30px;height:30px;background:linear-gradient(135deg,var(--vermelho),#8f1622);transform:rotate(45deg);border-radius:6px}
+  header h1{font-size:17px}
+  header small{display:block;font-size:9px;letter-spacing:2px;color:var(--cinza);font-weight:700}
+
+  main{max-width:920px;margin:0 auto;padding:24px 16px 60px}
+  .titulo{font-size:22px;font-weight:800;margin-bottom:4px}
+  .subt{font-size:13.5px;color:var(--cinza);margin-bottom:20px}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:720px){.grid{grid-template-columns:1fr}}
+
+  .card{background:#fff;border:1px solid var(--borda);border-radius:14px;padding:18px 20px;margin-bottom:16px}
+  .card h3{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+
+  label{display:block;font-size:12.5px;font-weight:600;color:#555;margin-bottom:5px}
+  .campo{margin-bottom:14px}
+  input,select{width:100%;font-size:14px;padding:10px 12px;border:1px solid var(--borda);border-radius:9px;background:#fff;font-family:inherit;outline:none}
+  input:focus,select:focus{border-color:var(--azul)}
+  .hint{font-size:11px;color:#999;margin-top:4px}
+  .inline{display:flex;gap:10px}
+  .inline .campo{flex:1}
+
+  .seg{display:flex;gap:6px;background:#eef0f3;border-radius:10px;padding:4px}
+  .seg button{flex:1;border:none;background:transparent;padding:9px;border-radius:7px;font-size:13px;font-weight:600;color:#666;cursor:pointer}
+  .seg button.on{background:#fff;color:var(--texto);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+  .btn-calc{width:100%;background:linear-gradient(#26b585,#1D9E75);border:none;color:#fff;font-weight:700;font-size:15px;padding:13px;border-radius:11px;cursor:pointer;border-bottom:3px solid #0f6e56;margin-top:4px}
+  .btn-calc:active{transform:translateY(2px);border-bottom-width:1px}
+
+  /* resultado */
+  #resultado{display:none}
+  .comp{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+  @media(max-width:720px){.comp{grid-template-columns:1fr}}
+  .box{border-radius:14px;padding:18px 20px;border:1px solid var(--borda)}
+  .box.hoje{background:#f7f8fa}
+  .box.reforma{background:linear-gradient(135deg,#eef5ff,#fff);border-color:#cfe0fb}
+  .box .tag{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#999}
+  .box.reforma .tag{color:var(--azul)}
+  .box .big{font-size:30px;font-weight:800;margin:6px 0 2px}
+  .box .pct{font-size:13px;color:#777}
+  .box .det{margin-top:12px;font-size:12.5px;color:#555}
+  .box .det .l{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed #e8e8ec}
+  .box .det .l:last-child{border-bottom:0}
+  .box .det .l b{font-weight:700}
+
+  .veredito{border-radius:14px;padding:16px 20px;font-size:15px;font-weight:600;margin-bottom:16px;text-align:center}
+  .veredito.sobe{background:#fcebec;color:#9a2531;border:1px solid #f3c6cb}
+  .veredito.desce{background:#eaf7f0;color:#0f6e56;border:1px solid #c7e9d8}
+  .veredito.igual{background:#fff7e6;color:#8a6a00;border:1px solid #f0dca8}
+  .veredito .n{font-size:24px;font-weight:800;display:block;margin-top:3px}
+
+  .nota-fora{font-size:12.5px;color:#666;background:#fffdf5;border:1px solid #f0e6c0;border-radius:10px;padding:12px 14px;margin-bottom:16px}
+  .disc{font-size:11.5px;color:#999;line-height:1.6;margin-top:18px;border-top:1px solid var(--borda);padding-top:14px}
+  .disc b{color:#777}
+
+  .linha-tempo{display:flex;gap:0;margin:6px 0 2px;overflow-x:auto}
+  .lt{flex:1;min-width:92px;text-align:center;font-size:11px;color:#888;position:relative;padding-top:16px}
+  .lt::before{content:"";position:absolute;top:5px;left:0;right:0;height:2px;background:#dde1e6}
+  .lt .dot{position:absolute;top:1px;left:50%;transform:translateX(-50%);width:10px;height:10px;border-radius:50%;background:#bcc3cc}
+  .lt.on .dot{background:var(--azul)}
+  .lt.on{color:var(--azul);font-weight:700}
+  .lt b{display:block;font-size:12px;color:#444}
+</style>
+</head>
+<body>
+<header>
+  <div class="losango"></div>
+  <div><h1>MÁXIMA</h1><small>GESTÃO CONTÁBIL</small></div>
+</header>
+
+<main>
+  <div class="titulo">🧮 Simulador da Reforma Tributária</div>
+  <div class="subt">Para profissionais e consultórios — veja como fica sua carga tributária comparando <b>hoje</b> com o <b>modelo pleno da reforma (2033)</b>.</div>
+
+  <!-- Linha do tempo -->
+  <div class="card">
+    <h3>📅 Como será a transição</h3>
+    <div class="linha-tempo">
+      <div class="lt"><span class="dot"></span>2026<b>Teste</b></div>
+      <div class="lt"><span class="dot"></span>2027<b>CBS entra<br>PIS/COFINS saem</b></div>
+      <div class="lt"><span class="dot"></span>2029–32<b>IBS sobe<br>ISS desce</b></div>
+      <div class="lt on"><span class="dot"></span>2033<b>Modelo pleno<br>só IBS+CBS</b></div>
+    </div>
+    <div class="hint" style="margin-top:8px">Esta simulação mostra o <b>cenário final (2033)</b> — o impacto cheio, para você planejar com antecedência.</div>
+  </div>
+
+  <div class="grid">
+    <!-- Entradas -->
+    <div>
+      <div class="card">
+        <h3>1️⃣ Seus dados</h3>
+        <div class="campo">
+          <label>Faturamento mensal (R$)</label>
+          <input type="text" id="fat" inputmode="decimal" placeholder="Ex.: 30.000,00" oninput="mascaraMoeda(this)">
+          <div class="hint">Receita bruta média por mês.</div>
+        </div>
+        <div class="campo">
+          <label>Regime atual</label>
+          <div class="seg" id="segRegime">
+            <button class="on" data-v="presumido" onclick="setRegime('presumido')">Lucro Presumido</button>
+            <button data-v="simples" onclick="setRegime('simples')">Simples Nacional</button>
+          </div>
+        </div>
+        <div class="campo">
+          <label>Profissão / atividade</label>
+          <select id="profissao" onchange="atualizaBadge()">
+            <optgroup label="Saúde humana — redução de 60%">
+              <option value="60|Médico">Médico (consultas e especialidades)</option>
+              <option value="60|Dentista">Dentista / Odontologia</option>
+              <option value="60|Psicólogo">Psicólogo</option>
+              <option value="60|Fisioterapeuta">Fisioterapeuta</option>
+              <option value="60|Fonoaudiólogo">Fonoaudiólogo</option>
+              <option value="60|Nutricionista">Nutricionista</option>
+              <option value="60|Enfermeiro">Enfermeiro</option>
+              <option value="60|Terapeuta ocupacional">Terapeuta ocupacional</option>
+              <option value="60|Biomédico / Laboratório">Biomédico / Laboratório / Imagem</option>
+            </optgroup>
+            <optgroup label="Profissão regulamentada — redução de 30%">
+              <option value="30|Advogado">Advogado</option>
+              <option value="30|Contador">Contador</option>
+              <option value="30|Administrador">Administrador</option>
+              <option value="30|Economista">Economista</option>
+              <option value="30|Engenheiro">Engenheiro</option>
+              <option value="30|Arquiteto">Arquiteto</option>
+              <option value="30|Agrônomo">Agrônomo</option>
+              <option value="30|Veterinário">Veterinário (saúde animal)</option>
+              <option value="30|Químico">Químico</option>
+              <option value="30|Outra regulamentada">Outra profissão regulamentada</option>
+            </optgroup>
+            <optgroup label="Sem redução">
+              <option value="0|Atividade sem redução">Atividade sem redução específica</option>
+            </optgroup>
+          </select>
+          <div class="hint" id="badgeProf"></div>
+        </div>
+      </div>
+
+      <div class="card" id="cardPresumido">
+        <h3>⚙️ Parâmetros — Presumido</h3>
+        <div class="campo">
+          <label>Como é o ISS que você paga hoje?</label>
+          <div class="seg" id="segISS">
+            <button class="on" data-v="fixo" onclick="setTipoISS('fixo')">ISS fixo (sociedade)</button>
+            <button data-v="pct" onclick="setTipoISS('pct')">ISS percentual</button>
+          </div>
+          <div class="hint">Profissional habilitado em sociedade costuma pagar ISS <b>fixo por sócio</b> (não é % do faturamento).</div>
+        </div>
+        <div class="inline" id="issFixoBox">
+          <div class="campo"><label>ISS fixo por sócio (R$/mês)</label><input type="text" id="issValor" value="327,79" inputmode="decimal" oninput="mascaraMoeda(this)"><div class="hint">Rio Verde: nível superior R$ 327,79</div></div>
+          <div class="campo"><label>Nº de sócios/profissionais</label><input type="text" id="issSocios" value="1" inputmode="numeric"><div class="hint">Habilitados na sociedade</div></div>
+        </div>
+        <div class="campo" id="issPctBox" style="display:none">
+          <label>ISS (%)</label><input type="text" id="iss" value="5" inputmode="decimal"><div class="hint">Alíquota do seu município</div>
+        </div>
+        <div class="campo"><label>Insumos c/ crédito (%)</label><input type="text" id="cred" value="10" inputmode="decimal"><div class="hint">% da receita com crédito de IBS/CBS</div></div>
+      </div>
+
+      <div class="card" id="cardSimples" style="display:none">
+        <h3>⚙️ Parâmetros — Simples</h3>
+        <div class="campo">
+          <label>Anexo</label>
+          <select id="anexo">
+            <option value="III">Anexo III (Fator R ≥ 28%)</option>
+            <option value="V">Anexo V (Fator R &lt; 28%)</option>
+          </select>
+          <div class="hint">Fator R = (folha + pró-labore) ÷ faturamento, dos últimos 12 meses.</div>
+        </div>
+      </div>
+
+      <button class="btn-calc" onclick="calcular()">Calcular →</button>
+    </div>
+
+    <!-- Resultado -->
+    <div id="resultado">
+      <div class="veredito" id="veredito"></div>
+      <div class="comp">
+        <div class="box hoje">
+          <span class="tag">Hoje</span>
+          <div class="big" id="hojeVal">R$ 0</div>
+          <div class="pct" id="hojePct"></div>
+          <div class="det" id="hojeDet"></div>
+        </div>
+        <div class="box reforma">
+          <span class="tag">Reforma (2033)</span>
+          <div class="big" id="refVal">R$ 0</div>
+          <div class="pct" id="refPct"></div>
+          <div class="det" id="refDet"></div>
+        </div>
+      </div>
+      <div class="nota-fora" id="notaExtra"></div>
+    </div>
+  </div>
+
+  <div class="disc">
+    <b>Avisos importantes:</b><br>
+    • A alíquota de referência de <b>26,5%</b> (IBS+CBS) é o <b>teto estimado</b> — a definitiva será fixada pelo Senado até 15/12/2026. Você pode ter um valor um pouco diferente.<br>
+    • Esta é uma <b>simulação informativa</b> e não substitui uma análise individual do seu caso pela Máxima.<br>
+    • No <b>Lucro Presumido</b>, IRPJ e CSLL aparecem nos dois lados como linha fixa (a reforma não os altera — só troca PIS/COFINS/ISS por IBS/CBS). Cálculo com presunção de 32% (serviço) e adicional de 10% de IRPJ sobre lucro presumido acima de R$ 20 mil/mês.<br>
+    • O <b>redutor de 30%</b> exige enquadramento (profissão regulamentada + tipo de sociedade) e <b>não se aplica dentro do Simples Nacional</b>.
+  </div>
+</main>
+
+<script>
+// ===== estado =====
+let REGIME = "presumido";
+let TIPO_ISS = "fixo";
+
+function setTipoISS(v){
+  TIPO_ISS = v;
+  document.querySelectorAll("#segISS button").forEach(b=>b.classList.toggle("on", b.dataset.v===v));
+  document.getElementById("issFixoBox").style.display = v==="fixo" ? "" : "none";
+  document.getElementById("issPctBox").style.display  = v==="pct"  ? "" : "none";
+}
+
+const ALIQ_REFERENCIA = 0.265;   // IBS+CBS modelo pleno 2033 (teto estimado)
+// Redutor vem da profissão escolhida (60% saúde humana, 30% regulamentada, 0% demais).
+
+function redutorDaProfissao(){
+  // valor do select = "PCT|Nome", ex "60|Médico"
+  const v = (document.getElementById("profissao").value || "0|").split("|");
+  return { pct: (parseInt(v[0],10)||0)/100, nome: v[1]||"" };
+}
+
+// tabelas Simples 2026 (nominal, dedução)
+const SIMPLES = {
+  III: [[180000,0.060,0],[360000,0.112,9360],[720000,0.135,17640],[1800000,0.160,35640],[3600000,0.210,125640],[4800000,0.330,648000]],
+  V:   [[180000,0.155,0],[360000,0.180,4500],[720000,0.195,9900],[1800000,0.205,17100],[3600000,0.230,62100],[4800000,0.305,540000]]
+};
+
+// ===== helpers =====
+function brl(v){ return (v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
+function num(s){ return parseFloat(String(s||"").replace(/\./g,"").replace(",",".").replace(/[^\d.]/g,"")) || 0; }
+function pctTxt(v){ return (v*100).toFixed(2).replace(".",",") + "%"; }
+function mascaraMoeda(el){
+  let v = el.value.replace(/\D/g,"");
+  if(!v){ el.value=""; return; }
+  v = (parseInt(v,10)/100).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+  el.value = v;
+}
+
+function setRegime(v){
+  REGIME = v;
+  document.querySelectorAll("#segRegime button").forEach(b=>b.classList.toggle("on", b.dataset.v===v));
+  document.getElementById("cardPresumido").style.display = v==="presumido" ? "" : "none";
+  document.getElementById("cardSimples").style.display = v==="simples" ? "" : "none";
+}
+function atualizaBadge(){
+  const {pct, nome} = redutorDaProfissao();
+  const el = document.getElementById("badgeProf");
+  if(pct>0){
+    el.innerHTML = "Redução de <b>"+ (pct*100) +"%</b> na reforma (fora do Simples). "+
+      (pct===0.60 ? "Serviço de saúde humana (art. 130)." : "Profissão regulamentada (art. 127).");
+  } else {
+    el.textContent = "Sem redução específica na reforma.";
+  }
+}
+
+// ===== cálculo Simples (alíquota efetiva pela faixa) =====
+function aliquotaSimples(anexo, rbt12){
+  const faixas = SIMPLES[anexo];
+  let f = faixas[faixas.length-1];
+  for(const linha of faixas){ if(rbt12 <= linha[0]){ f = linha; break; } }
+  const [, nominal, deducao] = f;
+  const efetiva = (rbt12*nominal - deducao) / rbt12;
+  return Math.max(efetiva, 0);
+}
+
+// ===== cálculo principal =====
+function calcular(){
+  const fatMensal = num(document.getElementById("fat").value);
+  if(fatMensal <= 0){ alert("Informe o faturamento mensal."); return; }
+  const fatAnual = fatMensal * 12;
+
+  // alíquota da reforma (com ou sem redutor) — redutor NÃO vale no Simples
+  const {pct: redPct, nome: profNome} = redutorDaProfissao();
+  const aplicaRedutor = (redPct > 0 && REGIME==="presumido");
+  const aliqReforma = ALIQ_REFERENCIA * (aplicaRedutor ? (1-redPct) : 1);
+
+  let hojeMensal, hojeDet, refMensal, refDet, notaExtra="";
+
+  if(REGIME === "presumido"){
+    const credPct = num(document.getElementById("cred").value)/100;
+    // ISS: fixo (valor por sócio × nº sócios) ou percentual sobre a receita.
+    let issValor, issRotulo;
+    if(TIPO_ISS === "fixo"){
+      const porSocio = num(document.getElementById("issValor").value);
+      const socios = Math.max(parseInt(num(document.getElementById("issSocios").value),10)||1, 1);
+      issValor = porSocio * socios;
+      issRotulo = "ISS fixo ("+ socios +"× "+ brl(porSocio) +")";
+    } else {
+      const issPct = num(document.getElementById("iss").value)/100;
+      issValor = fatMensal * issPct;
+      issRotulo = "ISS ("+ (issPct*100).toFixed(1).replace(".",",") +"%)";
+    }
+    // IRPJ + CSLL (presunção 32% para serviço) — iguais nos dois cenários (a reforma
+    // não mexe neles). Calculados para dar a CARGA TOTAL real ao cliente.
+    const base = fatMensal * 0.32;                 // lucro presumido
+    const irpj = base * 0.15 + Math.max(base - 20000, 0) * 0.10;  // 15% + adicional 10%
+    const csll = base * 0.09;
+    const irpjCsll = irpj + csll;
+
+    // HOJE: PIS+COFINS (3,65%) + ISS + IRPJ/CSLL
+    const pisCofins = 0.0365;
+    const hojeConsumo = fatMensal * pisCofins + issValor;
+    hojeMensal = hojeConsumo + irpjCsll;
+    hojeDet = [
+      ["PIS + COFINS (3,65%)", fatMensal*pisCofins],
+      [issRotulo, issValor],
+      ["IRPJ + CSLL (não muda)", irpjCsll],
+    ];
+    // REFORMA: IBS+CBS − crédito + IRPJ/CSLL (idêntico)
+    const impostoBruto = fatMensal * aliqReforma;
+    const credito = fatMensal * credPct * aliqReforma;  // crédito ~ aliq sobre insumos
+    const ibsCbs = Math.max(impostoBruto - credito, 0);
+    refMensal = ibsCbs + irpjCsll;
+    refDet = [
+      ["IBS+CBS ("+ pctTxt(aliqReforma) +")", impostoBruto],
+      ["(−) Crédito de insumos", -credito],
+      ["IRPJ + CSLL (não muda)", irpjCsll],
+    ];
+    notaExtra = (aplicaRedutor
+      ? "✓ Aplicado o <b>redutor de "+(redPct*100)+"%</b> ("+ (redPct===0.60 ? "serviço de saúde humana, art. 130" : "profissão regulamentada, art. 127") +"): a alíquota de "+pctTxt(ALIQ_REFERENCIA)+" cai para <b>"+pctTxt(aliqReforma)+"</b>. "
+      : "Sem redutor específico de profissão. ")
+      + "<b>IRPJ + CSLL ("+brl(irpjCsll)+"/mês) aparecem nos dois lados</b> porque a reforma não os altera — mudam só os tributos sobre consumo (PIS/COFINS/ISS → IBS/CBS)."
+      + (TIPO_ISS==="fixo" ? "<br>⚠️ Você paga <b>ISS fixo</b> hoje ("+brl(issValor)+"/mês). A reforma <b>acaba com o ISS fixo</b> — o IBS/CBS é sempre percentual sobre a receita. Por isso o impacto tende a ser maior para quem tem ISS fixo." : "");
+  } else {
+    // SIMPLES
+    const anexo = document.getElementById("anexo").value;
+    const efet = aliquotaSimples(anexo, fatAnual);
+    hojeMensal = fatMensal * efet;
+    hojeDet = [
+      ["DAS — Anexo "+anexo, fatMensal*efet],
+      ["Alíquota efetiva", null, pctTxt(efet)],
+    ];
+    // REFORMA no Simples: o redutor de 30% NÃO vale. Mostramos o IBS+CBS cheio
+    // como referência de quanto seria SE saísse do Simples (cenário de decisão).
+    const impostoBruto = fatMensal * ALIQ_REFERENCIA;
+    refMensal = impostoBruto;
+    refDet = [
+      ["IBS+CBS cheio ("+ pctTxt(ALIQ_REFERENCIA) +")", impostoBruto],
+    ];
+    notaExtra = "No <b>Simples Nacional</b> os redutores de 30%/60% <b>não se aplicam</b>. Quem fica no Simples segue pagando pelo DAS (o IBS/CBS já está embutido). O valor da reforma acima é uma referência de quanto seria o IBS+CBS cheio <b>se você optasse por sair</b> do Simples — útil para decidir o melhor regime. Só ao recolher IBS/CBS por fora (regime regular) é que a redução de "+(redPct>0?(redPct*100)+"%":"profissão")+" entraria na conta. A Máxima analisa caso a caso.";
+  }
+
+  // ===== render =====
+  document.getElementById("hojeVal").textContent = brl(hojeMensal);
+  document.getElementById("hojePct").textContent = pctTxt(hojeMensal/fatMensal) + " do faturamento · " + brl(hojeMensal*12) + "/ano";
+  document.getElementById("refVal").textContent = brl(refMensal);
+  document.getElementById("refPct").textContent = pctTxt(refMensal/fatMensal) + " do faturamento · " + brl(refMensal*12) + "/ano";
+  document.getElementById("hojeDet").innerHTML = linhasDet(hojeDet);
+  document.getElementById("refDet").innerHTML = linhasDet(refDet);
+  document.getElementById("notaExtra").innerHTML = notaExtra;
+
+  // veredito — a diferença vem só da parte de consumo (IRPJ/CSLL se cancelam).
+  // Limiar de "estável" medido sobre o faturamento (base estável), não sobre o total.
+  const dif = refMensal - hojeMensal;
+  const vEl = document.getElementById("veredito");
+  if(Math.abs(dif) < fatMensal*0.005){
+    vEl.className = "veredito igual";
+    vEl.innerHTML = "Carga praticamente <b>estável</b> com a reforma.<span class='n'>"+ (dif>=0?"+":"") + brl(dif) + "/mês</span>";
+  } else if(dif > 0){
+    vEl.className = "veredito sobe";
+    vEl.innerHTML = "Sua carga tende a <b>aumentar</b> com a reforma.<span class='n'>+ "+ brl(dif) +"/mês · + "+ brl(dif*12) +"/ano</span>";
+  } else {
+    vEl.className = "veredito desce";
+    vEl.innerHTML = "Sua carga tende a <b>diminuir</b> com a reforma.<span class='n'>− "+ brl(Math.abs(dif)) +"/mês · − "+ brl(Math.abs(dif*12)) +"/ano</span>";
+  }
+
+  document.getElementById("resultado").style.display = "block";
+  document.getElementById("resultado").scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+
+atualizaBadge();  // mostra o redutor da profissão inicial
+
+function linhasDet(arr){
+  return arr.map(x=>{
+    const [rot, val, txt] = x;
+    const direita = txt != null ? txt : (val<0 ? "− "+brl(Math.abs(val)) : brl(val));
+    return `<div class="l"><span>${rot}</span><b>${direita}</b></div>`;
+  }).join("");
+}
+</script>
+</body>
+</html>
